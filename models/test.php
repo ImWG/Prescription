@@ -29,7 +29,7 @@
 			
 			//如果是任务
 			if ($task > 0){
-				$queryTask = $DB->query("select * from `tasks` where `User`='$task'");
+				$queryTask = $DB->query("select * from `tasks` where `User`='$task' order by `TasksId` desc limit 0,1");
 				$row = mysql_fetch_array($queryTask);
 				
 				$items = array();
@@ -115,6 +115,9 @@
 			//将所有可能的ID提取出来
 			$itemIds = explode(',', $_post['itemIds']);
 			
+			//任务ID
+			$tasksId = $_post['tasksId'];
+			
 			global $mode;
 			
 			//查询那些表中已有的ID
@@ -124,7 +127,7 @@
 				$existedIds[] = $row['ItemId'];
 			}
 			
-			$insert = 'insert into `presc_evals` (`';
+			$insert = 'insert into `presc_evals` (`TasksId`,`';
 			foreach(Database::$COLUMNS_EVALS_NOID as $KEY => $NAME){
 				$insert .= $KEY.'`,`';
 			}
@@ -166,7 +169,7 @@
 				
 				if ($exists){ //如果原本已经存在这条记录，就以UPDATE的形式更新
 					
-					$line = 'update `presc_evals` set ';
+					$line = 'update `presc_evals` set `TasksId`="'.$tasksId.'",';
 					$empty = true;
 					
 					$kvs = array();
@@ -190,7 +193,7 @@
 					
 				}else{ //如果没有记录，就以INSERT的形式插入
 					
-					$line = '("';
+					$line = '("'.$tasksId.'","';
 					$empty = true;
 					
 					foreach(Database::$COLUMNS_EVALS_NOID as $KEY => $NAME){
@@ -252,7 +255,8 @@
 			
 			$exDoctors = $_post['exDoctors'];
 			$dIds = $_post['dIds'];
-			$taskNum = 3;
+			$tasksId = $_post['tasksId'];
+			$taskNum = $_post['taskNum'];
 			
 			$meta = array();
 			
@@ -289,14 +293,14 @@
 				$tasks[$user] = $str;
 			}
 			
-			$queryTask = "insert into `tasks` (`User`, `ItemIds`) values";
+			$queryTask = "insert into `tasks` (`User`, `ItemIds`, `TasksId`) values";
 			foreach ($tasks as $taskid => $task){
-				$queryTask .= " ('$taskid', '".addslashes($task)."'),";
+				$queryTask .= " ('$taskid', '".addslashes($task)."', '$tasksId'),";
 			}
 			$queryTask = substr($queryTask, 0, -1);
 			
-			//注意！要清空表然后再写入！
-			$DB->query("DELETE FROM `tasks` WHERE 1");
+			//原先的设置：要清空表然后再写入，现在不再使用。
+			//$DB->query("DELETE FROM `tasks` WHERE 1");
 			$meta['assign']['num'] = $taskNum;
 			$meta['assign']['status'] = (int)$DB->query($queryTask);
 			
@@ -348,6 +352,78 @@
 				$b = unpack('l', substr($task1, $i, 4));
 				echo ', '.$b[1];
 			}*/
+		}
+
+		static function saveTaskSettings($_post){
+			if ($_post['task'] != 0){
+				return array('error'=>1);
+			}
+			
+			global $DB;
+			
+			$settings = $_post;
+			unset($settings['mode']);
+			unset($settings['task']);
+			$value = addSlashes(json_encode($settings));
+			$time = date('Y-m-d h:i:s', $_SERVER['REQUEST_TIME']);
+			$queryStr = "insert into `task_settings` (`Time`,`Value`) values ('$time', '$value')";
+			
+			if (!$DB->query($queryStr)){
+				return array('error'=>2);
+			}else{
+				$row1 = mysql_fetch_array($DB->query('select `TaskId` from `task_settings` order by `TaskId` desc limit 0,1'));
+				return array('error'=>0, 'id'=>$row1['TaskId']);
+			}
+		}
+		
+		
+		static function loadTaskSettings($id){
+			global $DB;
+			
+			$query = $DB->query('select * from `task_settings` where `TasksId`="'.$id.'" limit 0,1');
+			if (!$query){
+				return array('error'=>1);
+			}else{
+				$row1 = mysql_fetch_array($query, MYSQL_ASSOC);
+				return array('error'=>0, 
+					'data'=>array(
+						'id'=>$row1['TasksId'], 'time'=>$row1['Time'], 'value'=>json_decode($row1['Value'])
+					)
+				);
+			}
+		}
+		
+		static function loadAllTaskSettings($desc = true){
+		
+			global $DB;
+			
+			$query = $DB->query('select * from `task_settings` order by `TasksId` '.($desc ? 'desc' : 'asc'));
+			if (!$query){
+				return array('error'=>1);
+			}else{
+				$meta = array('error'=>0, 'data'=>array());
+				
+				while ($row = mysql_fetch_array($query, MYSQL_ASSOC)){
+					$meta['data'][] = array('id'=>$row['TasksId'], 'time'=>$row['Time'], 'value'=>json_decode($row['Value']));
+				}
+				return $meta;
+			}
+		}
+		
+		static function loadLastTaskSettings(){
+			global $DB;
+			
+			$query = $DB->query('select * from `task_settings` order by `TasksId` desc limit 0,1');
+			if (!$query){
+				return array('error'=>1);
+			}else{
+				$row1 = mysql_fetch_array($query, MYSQL_ASSOC);
+				return array('error'=>0, 
+					'data'=>array(
+						'id'=>$row1['TasksId'], 'time'=>$row1['Time'], 'value'=>json_decode($row1['Value'])
+					)
+				);
+			}
 		}
 	}
 	

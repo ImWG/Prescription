@@ -49,4 +49,49 @@
 		'EOther'=>'备注',
 		'Checked'=>'已阅'
 	);
+	
+	//每列的宽度，请保证每一行都为12
+	$COLUMNS_STRIDE = array(
+		'P'=>array(
+			'Id'=>2,
+			'Prescription'=>2,
+			'PatientName'=>3,
+			'PatientGender'=>2,
+			'PatientAge'=>3,
+			'Doctor'=>2,
+			'Service'=>2,
+			'Diagnosis'=>8
+		),
+		
+		'I'=>array(
+			'Id'=>12,
+			'Prescription'=>12,
+			
+			'ItemId'=>3,
+			'Name'=>6,
+			'AdviceCategory'=>3,
+			'Scale'=>6,
+			'Method'=>2,
+			'Frequency'=>2,
+			'Dosage'=>2,
+			'Time'=>3,
+			'Level'=>3,
+			'Insurance'=>3,
+			'Price'=>3,
+		),
+		
+		'E'=>array(
+			'ItemId'=>12,
+			
+			'EMatch'=>4,
+			'EDosage'=>4,
+			'EFrequency'=>4,
+			'EOccasion'=>4,
+			'ECourse'=>4,
+			'ECombine'=>4,
+			
+			'EOther'=>10,
+			'Checked'=>2
+		)
+	);
 ?>

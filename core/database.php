@@ -5,9 +5,11 @@
 		
 		static $COLUMNS_PRESCS, 
 			$COLUMNS_ITEMS, 
+			$COLUMNS_ITEMS_NOX, 
 			$COLUMNS_EVALS, 
 			$COLUMNS_EVALS_NOID, 
-			$COLUMNS_EVALS_NOCHECKED;
+			$COLUMNS_EVALS_NOCHECKED,
+			$COLUMNS_STRIDE;
 		
 		function __construct(){
 			include('config.php');
@@ -22,11 +24,17 @@
 			self::$COLUMNS_ITEMS = $COLUMNS_ITEMS;
 			self::$COLUMNS_EVALS = $COLUMNS_EVALS;
 			
+			self::$COLUMNS_ITEMS_NOX = $COLUMNS_ITEMS;
+			unset(self::$COLUMNS_ITEMS_NOX['Id']);	
+			unset(self::$COLUMNS_ITEMS_NOX['Prescription']);	
+			
 			self::$COLUMNS_EVALS_NOID = $COLUMNS_EVALS;
 			unset(self::$COLUMNS_EVALS_NOID['ItemId']);			
 			
 			self::$COLUMNS_EVALS_NOCHECKED = self::$COLUMNS_EVALS_NOID;
 			unset(self::$COLUMNS_EVALS_NOCHECKED['Checked']);
+			
+			self::$COLUMNS_STRIDE = $COLUMNS_STRIDE;
 		}
 		
 		public function connect(){

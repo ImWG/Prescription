@@ -1,12 +1,13 @@
 <html>
 	<head>
 		<meta charset='gbk'>
-		<style>
+		<!--<style>
 			body, table{
 				font-size:9px;
 			}
-		</style>
+		</style>-->
 	</head>
+	<link href="http://apps.bdimg.com/libs/bootstrap/3.3.0/css/bootstrap.min.css" rel="stylesheet">
 	<body>
 		<form method="post" action="testpost.php">
 			<input type="submit" />
@@ -63,7 +64,36 @@
 				'limit2' => $limit2,
 				'limit3' => $limit3,
 			);
+			if ($task == 0){
+				$taskSettings = Test::saveTaskSettings($params);
+				echo '状况:'.json_encode($taskSettings);
+			}else{
+				if($task == -2){
+					//旧任务
+					$taskSettings = Test::loadTaskSettings($_POST['tasksId']);
+					$value = $taskSettings['data']['value'];
+					foreach ($params as $key => $val){
+						if ($key == 'mode')
+							$params[$key] = 1;
+						elseif ($key == 'task')
+							$params[$key] = 0;
+						else{
+							$params[$key] = $value->$key;
+						}
+					}
+				}else{
+					$taskSettings = Test::loadLastTaskSettings();
+				}
+				echo "任务组编号：{$taskSettings['data']['id']}，制订时间：{$taskSettings['data']['time']} ";
+				if ($task == -1){
+					echo "任务号：全部";
+				}elseif ($task > 0){
+					echo "任务号：$task";
+				}
+			}
 			$data = Test::getTestData($params);
+			
+			echo "<input type='hidden' value='{$taskSettings['data']['id']}' name='tasksId'/>";
 			
 			if ($task == 0){
 				$doctors = array();
@@ -89,50 +119,64 @@
 				if ($presc['data'] == null){
 					continue; //没有数据的不显示
 				}
-				echo '<p>';
-				foreach(Database::$COLUMNS_PRESCS as $KEY => $NAME){
-					echo $NAME.':'.$presc[$KEY].'<br/>';
-				}
-				echo '</p>';
 				
-				echo '<table>';
-				echo '<tr>';
-				foreach(Database::$COLUMNS_ITEMS as $NAME){
-						echo "<th>$NAME</th>";
+				echo '<div class="panel panel-default">';
+				
+				//显示处方总体信息
+				echo '<div class="col-sm-12 panel-heading">';
+				foreach(Database::$COLUMNS_PRESCS as $KEY => $NAME){
+					echo '<span class="col-sm-'.Database::$COLUMNS_STRIDE['P'][$KEY].'">'.$NAME.':'.$presc[$KEY].'</span>';
 				}
-				if ($task != 0){
-					foreach($columnEvals as $NAME){
-							echo "<th>$NAME</th>";
-					}
-				}
-				echo '</tr>';
+				echo '</div>';
+				echo '<div class="panel-body">';
+				echo '<ul class="list-group">';
 				
 				foreach($presc['data'] as $item){
 					$id = $item['ItemId'];
 					$itemIds[] = $id;
-					echo '<tr>';
-					foreach(Database::$COLUMNS_ITEMS as $KEY => $NAME){
-						echo '<td>'.$item[$KEY].'</td>';
+					
+					echo '<li class="list-group-item col-sm-12">';
+					
+					//显示处方表头和信息
+					foreach(Database::$COLUMNS_ITEMS_NOX as $KEY => $NAME){
+							echo "<span class='col-sm-".Database::$COLUMNS_STRIDE['I'][$KEY]."'><label>{$NAME}：</label>{$item[$KEY]}</span>";
 					}
+					
+					
+					//显示评价表头
+					/*if ($task != 0){
+						foreach($columnEvals as $NAME){
+								echo "<th>$NAME</th>";
+						}
+					}*/
+
+					//显示评价信息
 					if ($task != 0){
 						foreach($columnEvals as $KEY => $NAME){
 							$value = $item[$KEY];
 							if ($KEY == 'EOther'){
-								echo "<td><textarea name='$id.$KEY'>$value</textarea></td>";
+								echo "<label class='col-sm-1 text-right'>$NAME</label><textarea class='col-sm-10' name='$id.$KEY'>$value</textarea></td>";
 							}elseif ($KEY == 'Checked'){
 								if ($mode == 1)
-									echo "<td><input type='checkbox' name='$id.$KEY' ".($value==2 ? 'checked' : '').' value=1 /></td>';
+									$checked = $value==2 ? 'checked' : '';
 								else
-									echo "<td><input type='checkbox' name='$id.$KEY' ".($value==1 ? 'checked' : '').' value=1 /></td>';
+									$checked = $value==1 ? 'checked' : '';
+									
+								echo "<span class='col-sm-1 text-right'><input class='form-control' type='checkbox' name='$id.$KEY' $checked value=1 /></span>";
 							}else{
 								$checked = $value[0]=='.' ? 'checked' : '';
-								echo "<td><input type='checkbox' name='$id~$KEY' $checked/><textarea name='$id.$KEY'>".substr($value,1).'</textarea></td>';
+								echo "<span class='col-sm-2 text-right'><label>$NAME</label><input type='checkbox' name='$id~$KEY' $checked/></span><textarea class='col-sm-10' name='$id.$KEY'>".substr($value,1).'</textarea>';
 							}
 						}
 					}
-					echo '</tr>';
+
+					echo '</li>';
+					
 				}
-				echo '</table>';
+				echo '</ul>';
+				echo '</div>';
+				echo '</div>';
+				
 			}
 					
 			if ($task == 0){
@@ -147,4 +191,6 @@
 		?>
 		</form>
 	</body>
+	<script src="http://apps.bdimg.com/libs/jquery/2.0.0/jquery.min.js"></script>
+	<script src="http://apps.bdimg.com/libs/bootstrap/3.3.0/js/bootstrap.min.js"></script>
 </html>
