@@ -1,6 +1,9 @@
 <?php
 	class Test {
 		
+		/**
+		 * 获得处方
+		 */
 		static function getTestData($params){
 		
 			global $DB;
@@ -15,6 +18,8 @@
 			$taskNum = $params['taskNum'];
 			$limit2 = $params['limit2'];
 			$limit3 = $params['limit3'] == 0 ? 0xFFFFFF : $params['limit3'];
+			$drugGroups = $params['drugGroups'];
+			$tasksId = $params['tasksId'];
 			
 			
 			$condition0 = '';
@@ -27,8 +32,9 @@
 					: "WHERE (`Checked` = 0 OR `Checked` = 1 OR `Checked` IS NULL)"; //对于组员
 			}
 			
-			//如果是任务
+			
 			if ($task > 0){
+				//如果是任务
 				$queryTask = $DB->query("select * from `tasks` where `User`='$task' order by `TasksId` desc limit 0,1");
 				$row = mysql_fetch_array($queryTask);
 				
@@ -43,22 +49,47 @@
 				}
 				
 				$condition .= ' AND ('.implode(' OR', $items).')';
+				
 			}else{
-				//获取处方部分
-				if ($type == 'normal'){
-					$condition0 .= " WHERE `Service` NOT LIKE '%急诊%' AND `Prescription` <> ''";
-				}elseif ($type == 'emergency'){
-					$condition0 .= " WHERE `Service` LIKE '%急诊%' AND `Prescription` <> ''";
-				}elseif ($type == 'hospitalized'){
-					$condition0 .= " WHERE `Prescription` = ''";
+				$unassigned = false;
+				if ($task == -2){ 
+					// 旧任务
+					$queryTask = $DB->query("select * from `tasks` where `TasksId`='$tasksId' order by `User` asc");
+					$items = array();
+					while ($row = mysql_fetch_array($queryTask)){
+
+						$task1 = $row['ItemIds'];
+						$l = strlen($task1);
+						for ($i=0; $i<$l; $i+=4){
+							$b = unpack('l', substr($task1, $i, 4));
+							
+							//现在使用的是按ItemId分配的，实际上现有的设计中只按医生名称分配
+							$items[] = ' `presc_items`.`ItemId` = "'.$b[1].'"';
+						}
+					}
+					if (count($items) > 0)
+						$condition .= ' AND ('.implode(' OR', $items).')';
+					else //如没有任何任务数据，便认为是未分配任务
+						$unassigned = true;
 				}
 				
-				//人数
-				if ($limit > 0){
-					if ($random == 1 && $limit > 0){
-						$condition0 = "RIGHT JOIN (select distinct `Doctor` from `prescriptions` ORDER BY RAND() limit 0, $limit) as `n` ON `prescriptions`.`Doctor` = `n`.`Doctor` ".$condition0;
-					}else{
-						$condition0 = "RIGHT JOIN (select distinct `Doctor` from `prescriptions` ORDER BY `Doctor` limit 0, $limit) as `n` ON `prescriptions`.`Doctor` = `n`.`Doctor` ".$condition0;
+				if ($task != -2 || $unassigned){ 
+					//获取处方部分
+					if ($type == 'normal'){
+						$condition0 .= " WHERE `Service` NOT LIKE '%急诊%' AND `Prescription` <> ''";
+					}elseif ($type == 'emergency'){
+						$condition0 .= " WHERE `Service` LIKE '%急诊%' AND `Prescription` <> ''";
+					}elseif ($type == 'hospitalized'){
+						$condition0 .= " WHERE `Prescription` = ''";
+					}
+					
+					//人数
+					if ($limit > 0){
+						if ($random == 1 && $limit > 0){
+							$condition0 = "RIGHT JOIN (select distinct `Doctor` from `prescriptions` ORDER BY RAND() limit 0, $limit) as `n` ON `prescriptions`.`Doctor` = `n`.`Doctor` ".$condition0;
+						}else{
+							$condition0 = "RIGHT JOIN (select distinct `Doctor` from `prescriptions` ORDER BY `Doctor` limit 0, $limit) as `n` ON `prescriptions`.`Doctor` = `n`.`Doctor` ".$condition0;
+						}
 					}
 				}
 			}
@@ -75,10 +106,19 @@
 			if ($dateTo != ''){
 				$condition .= " AND `Time` <='$dateTo'";
 			}
-			
-			
-			$query = $DB->query('SELECT *, `presc_items`.`ItemId`  FROM `presc_items` LEFT JOIN `presc_evals` ON `presc_items`.`ItemId`=`presc_evals`.`ItemId` '
-				.$condition.' ORDER BY `Id`, `Prescription`');
+
+			//根据药品标签获取药品条件
+			$drugs = Drugs::getListByGroups($drugGroups, true);
+			$drugConditions = array();
+			foreach ($drugs as $drug){
+				$drugConditions[] = '`Name`="'.$drug['name'].'"';
+			}
+			if (count($drugConditions) == 0){
+				$drugConditions[] = 'TRUE';
+			}
+
+			$query = $DB->query('SELECT * FROM (SELECT * FROM `presc_items` WHERE '.implode(' OR ', $drugConditions).
+				') AS `presc_items` LEFT JOIN `presc_evals` USING(`ItemId`) '.$condition.' ORDER BY `Id`, `Prescription`');
 				
 			$itemIds = array();
 			$key = "";
@@ -106,6 +146,70 @@
 			
 			return $data;
 		}
+		
+
+		//根据任务组编号获取任务信息
+		static function getTasksById($tasksId = 0){
+		
+			global $DB;
+			
+			if ($tasksId == 0){
+				$taskSettingsMeta = self::loadLastTaskSettings();
+				$tasksId = $taskSettingsMeta['data']['id'];
+			}
+			
+			$meta = array();
+			$query = $DB->query("select * from `tasks` where `TasksId`='$tasksId'");
+			if ($query){
+				$meta['error'] = 0;
+				
+				$meta['data'] = array();
+				while ($row = mysql_fetch_array($query, MYSQL_ASSOC)){
+					$ids = array();
+					$oids = $row['ItemIds'];
+					$l = strlen($oids);
+					for ($i=0; $i<$l; $i+=4){
+						$b = unpack('l', substr($oids, $i, 4));
+						$ids[] = $b[1];
+					}
+					$meta['data'][$row['User']] = $ids;
+				}
+			}else{
+				$meta['error'] = 1;
+			}
+			
+			return $meta;
+		}
+
+		//根据任务组编号获取列表
+		static function getListByTasksId($tasksId = 0, $serial = false){
+			global $DB;
+		
+			$tasksMeta = self::getTasksById($tasksId);
+			$idss = $tasksMeta['data'];
+			$lists = array();
+			foreach ($idss as $user => $ids){
+			
+				//三表相连
+				$queryStr = 
+				'select * from `prescriptions` RIGHT JOIN (SELECT * FROM `presc_evals` RIGHT JOIN (SELECT * FROM `presc_items` where `ItemId` = "'.implode('" OR `ItemId` = "',$ids).'") AS `presc_evals` USING (`ItemId`)) AS `items` USING(`Prescription`, `Id`);';
+				
+				$query = $DB->query($queryStr);
+				$list = array();
+				while ($row = mysql_fetch_array($query, MYSQL_ASSOC)){
+					$list[] = $row;
+				}
+				if ($serial){
+					$lists = array_merge($lists, $list);
+				}else{
+					$lists[$user] = $list;
+				}
+				
+			}
+			
+			return array('error'=>0, 'data'=>$lists);
+		}
+		
 		
 		
 		static function postTest($_post){
@@ -371,8 +475,8 @@
 			if (!$DB->query($queryStr)){
 				return array('error'=>2);
 			}else{
-				$row1 = mysql_fetch_array($DB->query('select `TaskId` from `task_settings` order by `TaskId` desc limit 0,1'));
-				return array('error'=>0, 'id'=>$row1['TaskId']);
+				$row1 = mysql_fetch_array($DB->query('select `TasksId` from `task_settings` order by `TasksId` desc limit 0,1'));
+				return array('error'=>0, 'data'=>array('id'=>$row1['TasksId']));
 			}
 		}
 		

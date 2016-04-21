@@ -18,10 +18,10 @@
 				'id' => $_POST['id']);
 				
 			$params['type'] = $_POST['type'];
-			if ($_POST['type'] == 0){
+			if ($_POST['type'] == Drugs::TYPE_FIXED || $_POST['type'] == Drugs::TYPE_SUPER){
 				if (isset($_POST['drugs']))
 					$params['data']['ids'] = $_POST['drugs'];
-			}else if ($_POST['type'] == 1){
+			}else if ($_POST['type'] == Drugs::TYPE_DYNAMIC){
 				if (isset($_POST['column']))
 					$params['data']['column'] = $_POST['column'];
 				if (isset($_POST['conditions']))
@@ -41,8 +41,8 @@
 		}
 	}else if ($_GET['type'] == 'remove'){
 		if (isset($_POST['id'])){
-			$params['id'] = $_POST['id'];
-			$meta = Drugs::removeGroup($params);
+			$id = $_POST['id'];
+			$meta = Drugs::removeGroup($id);
 		}
 	}
 	

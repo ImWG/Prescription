@@ -10,6 +10,9 @@
 			$COLUMNS_EVALS_NOID, 
 			$COLUMNS_EVALS_NOCHECKED,
 			$COLUMNS_STRIDE;
+			
+		static $FLAG_APPROVED = '.';
+		static $FLAG_REJECTED = '*';
 		
 		function __construct(){
 			include('config.php');

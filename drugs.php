@@ -72,7 +72,7 @@
 			
 			include('models/drugs.php');
 			
-			if ($_GET['type']=='listgroups' || $_GET['type']==''){
+			if ($_GET['type']=='listgroups' || $_GET['type']=='' || $_GET['type']==null){
 			
 				// ************************* 分组列表
 			
@@ -88,13 +88,28 @@
 				</div>
 				<input type='button' value='添加固定标签' onclick='location.href="drugs.php?type=create0"' />
 				<input type='button' value='添加动态标签' onclick='location.href="drugs.php?type=create1"' />
+				<input type='button' value='添加超级标签' onclick='location.href="drugs.php?type=create2"' />
+				
+				<input type='button' id='button_resume' value='返回' onclick='location.href="./";'/>
 				
 		<?php
-			}else if($_GET['type']=='modify0' || $_GET['type']=='create0'){
-			
-				// ************************* 创建/修改固定分组
-				
+			}else{
+				$function = substr($_GET['type'], 0, -1);
+				$type = substr($_GET['type'], -1, 1);
 				$notation = $_GET['notation'];
+				
+				$group;
+				if($function=='create'){
+					$group = array('id'=>-1);
+				}else{
+					$group = Drugs::getGroup($notation);
+				}
+			
+				if($type == 0){
+				
+					// ************************* 创建/修改固定分组
+					
+					
 		?>		
 				<div class="box" id="box_left">
 					<ul id="drug_out_group"><?php
@@ -114,42 +129,13 @@
 						}
 					?></ul>
 				</div>
-				<div class="box" id="box_additional">
-					<?php
-						$group;
-						if($_GET['type']=='create0'){
-							$group = array('id'=>-1);
-						}else{
-							$group = Drugs::getGroup($notation);
-						}
-					?>
-					<p>编号：<?php echo $group['id']; ?></p>
-					<p>代号：<input type='text' id='group_notation' value='<?php echo $group['notation']; ?>'/></p>
-					<p>名称：<input type='text' id='group_name' value='<?php echo $group['name']; ?>'/></p>
-					<p>备注：<textarea id='group_memo'><?php echo $group['memo']; ?></textarea></p>
-				</div>
 				
-				<form method="post" action="p_drugs.php?type=modify" id='my_form' target='frame_response'>
-					
-					<input type='hidden' name='id' value='<?php echo $group['id']; ?>'/>
-					<input type='hidden' name='type' value='0'/>
-					<span id='form_drugs'></span>
-				</form>
-				<form method="post" action="p_drugs.php?type=remove" id='my_form_remove' target='frame_response'>
-					<input type='hidden' name='id' value='<?php echo $group['id']; ?>'/>
-				</form>
-				<input type='button' id='button_modify' value='修改' onclick='submitDrugGroup0();'/>
-			<?php if($_GET['type']=='modify0'){ ?>
-				<input type='button' id='button_remove' value='删除' onclick='submitDrugGroupRemove();'/>
-			<?php } ?>
-				<input type='button' id='button_resume' value='返回' onclick='location.href="drugs.php?type=listgroups";'/>
-				<iframe id='frame_response' name='frame_response' sandbox=''></iframe>
 		<?php
-			}else if($_GET['type']=='modify1' || $_GET['type']=='create1'){
-			
-				// ************************* 创建/修改动态分组
+				}else if($type == 1){
 				
-				$notation = $_GET['notation'];
+					// ************************* 创建/修改动态分组
+					
+					$notation = $_GET['notation'];
 		?>
 				<div class="box" id="box_left">
 					<ul id="drug_out_group"><?php
@@ -162,112 +148,90 @@
 				</div>
 				
 				<div class="box" id="box_right">
-					<?php
-						$group;
-						if($_GET['type']=='create1'){
-							$group = array('id'=>-1);
-						}else{
-							$group = Drugs::getGroup($notation);
-						}
-						$tData = explode("\0", $group['data']);
-						$group['column'] = $tData[0];
-						$group['condition'] = '';
-						for ($i=1; $i<count($tData);++$i){
-							$group['condition'] .= ' '.$tData[$i];
-						}
-						$group['condition'] = substr($group['condition'], 1);
-					?>
-					<input type='text' id='group_column' value='<?php echo $group['column']; ?>'/>
-					<textarea id='group_condition'><?php echo $group['condition']; ?></textarea>
+
 				</div>
 				
+		<?php
+				}else if($type == 2){
+				
+					// ************************* 创建/修改超级分组
+					
+					$notation = $_GET['notation'];
+		?>
+				<div class="box" id="box_left">
+					<ul id="drug_out_group"><?php
+						$drugs = Drugs::getGroupsByGroup($notation, true);
+						foreach ($drugs as $drug){
+							$id = $drug['id'];
+							echo "<li value='{$drug['notation']}' id='drug_$id' onclick='drugAdd(\"$id\")'>$id: {$drug['name']}({$drug['notation']})</li>";
+						}
+					?></ul>
+				</div>
+				<div class="box" id="box_right">
+					<ul id="drug_in_group"><?php	
+						$drugs = Drugs::getGroupsByGroup($notation);
+						foreach ($drugs as $drug){
+							$id = $drug['id'];
+							echo "<li value='{$drug['notation']}' id='drug_$id' onclick='drugRemove(\"$id\")'>$id: {$drug['name']}({$drug['notation']})</li>";
+						}
+					?></ul>
+				</div>
+				
+			<?php
+				}
+			?>
 				<div class="box" id="box_additional">
 					<p>编号：<?php echo $group['id']; ?></p>
 					<p>代号：<input type='text' id='group_notation' value='<?php echo $group['notation']; ?>'/></p>
 					<p>名称：<input type='text' id='group_name' value='<?php echo $group['name']; ?>'/></p>
 					<p>备注：<textarea id='group_memo'><?php echo $group['memo']; ?></textarea></p>
+					<?php
+						//动态标签的填写部分
+						if ($type == 1){
+							$tData = explode("\0", $group['data']);
+							$group['column'] = $tData[0];
+							$group['condition'] = '';
+							for ($i=1; $i<count($tData);++$i){
+								$group['condition'] .= ' '.$tData[$i];
+							}
+							$group['condition'] = substr($group['condition'], 1);
+							
+							echo '<p>----------------------------</p>';
+							
+							//echo "<p>字段名：<input type='text' id='group_column' value='{$group['column']}'/></p>";
+							echo '<p>字段名：<select type="text" id="group_column"/>';
+							echo '<option value="_">(无)</option>';
+							foreach (Drugs::$COLUMNS_DYNAMIC_GROUP as $KEY => $NAME){
+								$selected = ($group['column']==$KEY ? 'selected="true"' : 'false');
+								echo "<option value='$KEY' $selected>{$NAME}({$KEY})</option>";
+							}
+							echo '</select></p>';
+							echo "<p>关键字：<textarea id='group_condition'>{$group['condition']}</textarea></p>";
+							echo "<p>不同关键字之间用空格分开，关键字前后加“%”则表示前后可有其他文字。</p>";
+						}
+					?>
 				</div>
 				
 				<form method="post" action="p_drugs.php?type=modify" id='my_form' target='frame_response'>
 					
 					<input type='hidden' name='id' value='<?php echo $group['id']; ?>'/>
-					<input type='hidden' name='type' value='1'/>
+					<input type='hidden' name='type' value='<?php echo $type; ?>'/>
 					<span id='form_drugs'></span>
 				</form>
 				<form method="post" action="p_drugs.php?type=remove" id='my_form_remove' target='frame_response'>
 					<input type='hidden' name='id' value='<?php echo $group['id']; ?>'/>
 				</form>
-				<input type='button' id='button_modify' value='修改' onclick='submitDrugGroup1();'/>
-			<?php if($_GET['type']=='modify1'){ ?>
+				<input type='button' id='button_modify' value='修改' onclick='submitDrugGroup<?php echo $type; ?>();'/>
+			<?php if( $function == 'modify' ){ ?>
 				<input type='button' id='button_remove' value='删除' onclick='submitDrugGroupRemove();'/>
 			<?php } ?>
 				<input type='button' id='button_resume' value='返回' onclick='location.href="drugs.php?type=listgroups";'/>
 				<iframe id='frame_response' name='frame_response' sandbox=''></iframe>
+				
 		<?php
 			}
 		?>
 		
 	</body>
-	<script>
-		function drugAdd(id){
-			var drug = document.getElementById('drug_'+id);
-			drug.setAttribute('onclick','drugRemove("'+id+'")');
-			var drugStr = drug.outerHTML;
-			drug.outerHTML = '';
-			
-			var drugInGroup = document.getElementById('drug_in_group');
-			drugInGroup.innerHTML += drugStr;
-		}
-		
-		function drugRemove(id){
-			var drug = document.getElementById('drug_'+id);
-			drug.setAttribute('onclick','drugAdd("'+id+'")');
-			var drugStr = drug.outerHTML;
-			drug.outerHTML = '';
-			
-			var drugOutGroup = document.getElementById('drug_out_group');
-			drugOutGroup.innerHTML += drugStr;
-		}
-		
-		function submitDrugGroupMeta(formDrugs){
-			formDrugs.innerHTML += '<input type="hidden" name="name" value="'+document.getElementById('group_name').value+'" />';
-			formDrugs.innerHTML += '<input type="hidden" name="notation" value="'+document.getElementById('group_notation').value+'" />';
-			formDrugs.innerHTML += '<input type="hidden" name="memo" value="'+document.getElementById('group_memo').value+'" />';
-		}
-		
-		function submitDrugGroup0(){
-			var drugInGroup = document.getElementById('drug_in_group');
-			var drugs = drugInGroup.childNodes;
-			var formDrugs = document.getElementById('form_drugs');
-			formDrugs.innerHTML = '';
-			
-			for (var i=0; i<drugs.length; ++i){
-				var drug = drugs[i];
-				if (drug.value)
-					formDrugs.innerHTML += '<input type="hidden" name="drugs[]" value="'+drug.value+'" />';
-			}
-			
-			submitDrugGroupMeta(formDrugs);
-			document.getElementById('my_form').submit();
-		}
-		
-		function submitDrugGroup1(){
-			var formDrugs = document.getElementById('form_drugs');
-			formDrugs.innerHTML = '';
-			
-			formDrugs.innerHTML += '<input type="hidden" name="column" value="'+document.getElementById('group_column').value+'" />';
-			var conditions = (document.getElementById('group_condition').value).split(' ');
-			for (var i=0; i<conditions.length; ++i){
-				formDrugs.innerHTML += '<input type="hidden" name="conditions[]" value="'+conditions[i]+'" />';
-			}
-			
-			submitDrugGroupMeta(formDrugs);
-			document.getElementById('my_form').submit();
-		}
-		
-		function submitDrugGroupRemove(){
-			if (confirm('您确定要删除吗？'))
-				document.getElementById('my_form_remove').submit();
-		}
-	</script>
+	<script src="./js/drugs.js"></script>
 </html>

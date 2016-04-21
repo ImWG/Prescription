@@ -10,7 +10,7 @@
 	<link href="http://apps.bdimg.com/libs/bootstrap/3.3.0/css/bootstrap.min.css" rel="stylesheet">
 	<body>
 		<form method="post" action="testpost.php">
-			<input type="submit" />
+			<input type="submit" /><input type='button' onclick="history.back();" value="返回"/>
 		<?php
 			include_once('core/util.php');
 			Util::startTimer();
@@ -19,6 +19,9 @@
 			global $DB;
 			$DB = new Database();
 			$DB->connect();
+			
+			include('models/test.php');
+			include('models/drugs.php');
 			
 			//获取配置
 			$mode = $_POST['mode'];
@@ -31,6 +34,8 @@
 			$taskNum = $_POST['taskNum'];
 			$limit2 = $_POST['limit2'];
 			$limit3 = $_POST['limit3'];
+			$drugGroups = $_POST['drugGroups'];
+			$tasksId = $_POST['tasksId'];
 			if ($task == 0 && $mode == 0){
 				$task = -1;
 			}
@@ -51,7 +56,6 @@
 			
 			
 			//从模型中获取数据
-			include('models/test.php');
 			$params = array(
 				'mode' => $mode,
 				'type' => $type,
@@ -63,6 +67,8 @@
 				'taskNum' => $taskNum,
 				'limit2' => $limit2,
 				'limit3' => $limit3,
+				'drugGroups' => $drugGroups,
+				'tasksId' => $tasksId,
 			);
 			if ($task == 0){
 				$taskSettings = Test::saveTaskSettings($params);
@@ -70,7 +76,7 @@
 			}else{
 				if($task == -2){
 					//旧任务
-					$taskSettings = Test::loadTaskSettings($_POST['tasksId']);
+					$taskSettings = Test::loadTaskSettings($tasksId);
 					$value = $taskSettings['data']['value'];
 					foreach ($params as $key => $val){
 						if ($key == 'mode')
@@ -99,9 +105,10 @@
 				$doctors = array();
 				foreach($data as $presc){
 					$doctor = $presc['Doctor'];
-					foreach($presc['data'] as $item){
-						$doctors[$doctor][] = $item['ItemId'];
-					}
+					if ($presc['data'] != null)
+						foreach($presc['data'] as $item){
+							$doctors[$doctor][] = $item['ItemId'];
+						}
 				}
 				echo '例外项：<table id="table_doctors"><tr>';
 				$i = 0;

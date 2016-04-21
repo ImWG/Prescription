@@ -8,6 +8,7 @@
 	$DB->connect();
 	
 	include_once('models/test.php');
+	include_once('models/drugs.php');
 ?>
 <html>
 	<head>
@@ -25,7 +26,7 @@
 	<!--<link href="http://apps.bdimg.com/libs/bootstrap/3.3.0/css/bootstrap.min.css" rel="stylesheet">-->
 	<body>
 		<div >
-			<form id='form' method='post' action='test.php'>
+			<form id='form' method='post' action='list.php'>
 			
 				<h3>请选择</h3>
 				
@@ -49,7 +50,7 @@
 					</select name='task'>
 					<span id='subsection_tasksId'>
 						<h5>旧任务编号：</h5>
-						<select name='tasksId' id='tasksId_' onchange="autofill('2011-01-01')">
+						<select name='tasksId' id='tasksId_' onchange="autofill()">
 						<?php
 							$settingsMeta = Test::loadAllTaskSettings();
 							if ($settingsMeta['error'] == 0){
@@ -60,8 +61,9 @@
 									$v = $setting['value'];
 									$parameters = array($v->dateFrom, $v->dateTo, $v->limit, $v->limit2, $v->limit3, $v->taskNum, $v->type);
 									$parameters = implode(',', $parameters);
+									$drugs = implode(',', $v->drugGroups);
 									echo "<option value='$id' class='option_tasks'
-										parameters=\"$parameters\");'
+										parameters=\"$parameters\");' drugs='$drugs'
 										>任务组 $id ($time)</option>";
 								}
 							}
@@ -112,9 +114,21 @@
 						最多<input type='text' name='limit3' value='0' id='limit3_' /><label for='limit3_'>件药品（0为没有限制）</label>
 					</p>
 					<input type='hidden' name='random' value='1'/>
+					
+					<div id='section_drugs'><h5>过滤的药品标签：</h5>
+						<ul>
+						<?php
+							$groups = Drugs::getGroups();
+							foreach ($groups as $group){
+								echo "<li><input type='checkbox' name='drugGroups[]' id='drug_{$group['notation']}' value='{$group['notation']}'/>{$group['name']}({$group['notation']})</li>";
+							}
+						?>
+						</ul>
+					</div>
 				</span>
 					
 				<input type='submit' />
+				<input type='button' onclick="location.href='./';" value="返回"/>
 			</form>
 		</div>
 	</body>
@@ -175,7 +189,16 @@
 				case 'emergency' : _('type_emergency').checked = true; break;
 				case 'hospitalized' : _('type_hospitalized').checked = true; break;
 			}
+			
+			var drugBoxes = _('section_drugs').getElementsByTagName('input');
+			for (var i=0; i<drugBoxes.length; ++i){
+				drugBoxes[i].checked = false;
+			}
 
+			var drugs = option.getAttribute('drugs').split(',');
+			for (var i=0; i<drugs.length; ++i){
+				_('drug_'+drugs[i]).checked = true;
+			}
 		}
 	</script>
 </html>
