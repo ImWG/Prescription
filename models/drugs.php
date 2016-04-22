@@ -146,13 +146,17 @@
 			
 			global $DB;
 			
-			$superGroup = self::getGroup($notation);
-			if ($superGroup['type'] != self::TYPE_SUPER)
-				return array();
-			$notations = explode(' ', $superGroup['data']);
-			
-			if (count($notations) > 0){
-				$query0 = $DB->query("select * from `drug_groups` where ".($invert ? 'NOT' : '')."(`notation`='".implode("' OR `notation`='", $notations)."') and type <> ".self::TYPE_SUPER.";");
+			if ($notation == null || $notation == ''){
+				$query0 = $DB->query("select * from `drug_groups` where ".($invert ? 'TRUE' : 'FALSE')." and type <> ".self::TYPE_SUPER.";");
+			}else{
+				$superGroup = self::getGroup($notation);
+				if ($superGroup['type'] != self::TYPE_SUPER)
+					return array();
+				$notations = explode(' ', $superGroup['data']);
+				
+				if (count($notations) > 0){
+					$query0 = $DB->query("select * from `drug_groups` where ".($invert ? 'NOT' : '')."(`notation`='".implode("' OR `notation`='", $notations)."') and type <> ".self::TYPE_SUPER.";");
+				}
 			}
 			
 			$groups = array();
@@ -170,7 +174,7 @@
 		 * 删除标签
 		 * $id-要删除的标签的编号
 		 */
-		static function removeGroup($params){
+		static function removeGroup($id){
 			
 			global $DB;
 			

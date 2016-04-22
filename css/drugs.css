@@ -1,0 +1,46 @@
+body, table{
+	font-size:9px;
+}
+.box{
+	border:solid;
+	position:absolute;
+	overflow:scroll;
+}
+#box_general{
+	width:320px; height:500px; top:0px; left:0px; position:relative;
+}
+#box_left{
+	width:320px; height:500px; top:0px; left:0px;
+}
+#box_right{
+	width:320px; height:500px; top:0px; left:320px;
+}
+#box_additional{
+	width:320px; height:500px; top:0px; left:640px;
+}
+
+.box li:hover{
+	background-color:red;
+	cursor:hand;
+}
+
+#button_modify{
+	position:absolute;
+	right:0px;
+}
+#button_remove {
+	color:red;
+	position:absolute;
+	top:50px;
+	right:0px;
+}
+#button_resume{
+	position:absolute;
+	top:100px;
+	right:0px;
+}
+#frame_response{
+	position:absolute;
+	bottom:0px;
+	right:0px;
+}
