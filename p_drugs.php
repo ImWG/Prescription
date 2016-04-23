@@ -44,11 +44,20 @@
 			$id = $_POST['id'];
 			$meta = Drugs::removeGroup($id);
 		}
+	}else if ($_GET['type'] == 'getGroups'){
+		$meta['status'] = 1;
+		$meta['data'] = Util::arrayIconvGBK2UTF8(Drugs::getGroups());	
+	}else if ($_GET['type'] == 'getDrugs'){
+		$meta['status'] = 1;
+		$meta['data'] = Util::arrayIconvGBK2UTF8(Drugs::getList(false));
+	}else if ($_GET['type'] == 'getDrugProperties'){
+		$meta['status'] = 1;
+		$meta['data'] = Util::arrayIconvGBK2UTF8(Drugs::getListProperties($_POST['column']));
 	}
 	
 	Util::endTimer(false);
 	
 	$meta['time'] = Util::$timer;
 	
-	echo json_encode($meta);
+	echo urldecode(json_encode($meta));
 ?>

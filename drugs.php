@@ -101,7 +101,9 @@
 				</div>
 				
 				<div class="box" id="box_right">
-
+				<?php if($type == 1){ ?>
+					<span id='t_list'></span>
+				<?php } ?>
 				</div>
 				
 		<?php
@@ -181,10 +183,16 @@
 				<input type='button' id='button_resume' value='返回' onclick='location.href="drugs.php?type=listgroups";'/>
 				<iframe id='frame_response' name='frame_response' sandbox=''></iframe>
 				
+				<div id='button_other1'>
+					<input type='checkbox' id='config_drugs_show'/><label for='config_drugs_show'>只显示指定值</label>
+					<input type='button' value='显示药品列表' onclick='loadDrugs();'/>
+				</div>
+				
 		<?php
 			}
 		?>
 		
 	</body>
 	<script src="./js/drugs.js"></script>
+	<script src="http://apps.bdimg.com/libs/jquery/2.0.0/jquery.min.js"></script>
 </html>

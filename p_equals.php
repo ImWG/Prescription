@@ -31,6 +31,11 @@
 			if (isset($_POST['memo']))
 				$params['memo'] = $_POST['memo'];
 				
+			if (isset($_POST['column']) && $_POST['column'] != ''){
+				$drugs = preg_replace('/(^\s+|\s+$)/', '', $_POST['column']);
+				$params['drugs'] = preg_replace('/\s+/', ' ', $drugs);
+			}
+				
 			$meta = Equals::setGroup($params);
 		} else {
 			$meta['status'] = 0;

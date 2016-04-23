@@ -26,17 +26,60 @@
 			
 			return $data;
 		}
+		
+		/**
+		 * 获取药品表的字段集
+		 */
+		static function getListColumns(){
+		
+			global $DB;
+			
+			$data = array();
+			$query = $DB->query("SHOW COLUMNS FROM `drugs`");
+			while ($row = mysql_fetch_array($query, MYSQL_ASSOC)){
+				$data[] = $row['Field'];
+			}
+			return $data;
+		}
 	
 		/**
-		 * 获取所有标签
+		 * 获取所有药品
 		 * $simple-如果为真则只获取id和name
 		 */
-		static function getList($simple){
+		static function getList($simple, $extraDrugs = array()){
 			
 			global $DB;
 			
 			return self::_getList('', $simple);
 		}
+		
+		/**
+		 * 获取药品某个属性的所有值
+		 * $column-字段名
+		 */
+		static function getListProperties($column){
+
+			global $DB;
+			
+			$columns = self::getListColumns();
+			$included = false;
+			foreach($columns as $col){
+				if ($col == $column){
+					$included = true; break;
+				}
+			}
+			
+			$data = array();
+			if ($included){
+				$query = $DB->query("select DISTINCT `$column` from `drugs`");
+				while ($row = mysql_fetch_array($query, MYSQL_ASSOC)){
+					$data[] = $row[$column];
+				}
+			}
+			
+			return $data;
+		}
+		
 		
 		/**
 		 * 设置标签属性

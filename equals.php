@@ -50,7 +50,7 @@
 		?>
 				
 				<div class="box" id="box_right">
-
+					<span id='t_list'></span>
 				</div>
 				
 				<div class="box" id="box_additional">
@@ -69,10 +69,10 @@
 							echo "<p>不同别名之间用空格分开，关键字前后加“%”则表示前后可有其他文字。</p>";
 						
 					?>
+					<p>对症标签：<input id='group_column' value='<?php echo $group['drugs']; ?>' />
 					<p>备注：<textarea id='group_memo'><?php echo $group['memo']; ?></textarea></p>
 				</div>
 				
-				<input type='hidden' id='group_column' value=''/>
 				<form method="post" action="p_equals.php?type=modify" id='my_form' target='frame_response'>
 					<input type='hidden' name='id' value='<?php echo $group['id']; ?>'/>
 					<input type='hidden' name='type' value='<?php echo $type; ?>'/>
@@ -89,7 +89,9 @@
 				<input type='button' id='button_resume' value='返回' onclick='location.href=".";'/>
 			<?php } ?>
 				<iframe id='frame_response' name='frame_response' sandbox=''></iframe>
+				<input type='button' id='button_other1' value='列出药品分组' onclick='loadDrugGroups();'/>
 		
 	</body>
 	<script src="./js/drugs.js"></script>
+	<script src="http://apps.bdimg.com/libs/jquery/2.0.0/jquery.min.js"></script>
 </html>

@@ -44,6 +44,7 @@
 			$notation = $params['notation'];
 			$name = $params['name'];
 			$memo = $params['memo'];
+			$drugs = $params['drugs'];
 			
 			$data = '';
 
@@ -59,7 +60,7 @@
 						
 			$query;
 			if ($id == -1)
-				$query = $DB->query("insert into `equal_diseases` (`type`, `notation`, `name`, `data`, `memo`) values ('$type', '$notation', '$name', '$data', '$memo')");
+				$query = $DB->query("insert into `equal_diseases` (`type`, `notation`, `name`, `data`, `memo`, `drugs`) values ('$type', '$notation', '$name', '$data', '$memo', '$drugs')");
 			else{
 				$sets = array();
 				$sets[] = "`type`='0'";
@@ -71,6 +72,8 @@
 					$sets[] = "`data`='$data'";
 				if (isset($params['memo']))
 					$sets[] = "`memo`='$memo'";
+				if (isset($params['drugs']))
+					$sets[] = "`drugs`='$drugs'";
 				$query = $DB->query("update `equal_diseases` set ".implode(', ', $sets)." where `id` = '$id'");
 			}
 			

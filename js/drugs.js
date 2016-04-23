@@ -60,3 +60,59 @@ function submitDrugGroupRemove(){
 	if (confirm('ÄúÈ·¶¨ÒªÉ¾³ýÂð£¿'))
 		document.getElementById('my_form_remove').submit();
 }
+
+
+function appendTo(tagid, value){
+	$('#'+tagid)[0].value += ' ' + value;
+}
+
+function loadDrugGroups(){
+	$.post('p_drugs.php?type=getGroups', '', function(meta){
+		var result = jQuery.parseJSON(meta);
+		if (result.status == 1){
+			var t_list = $('#t_list')[0];
+			t_list.innerHTML = '';
+			
+			var data = result.data;
+			for (var i=0; i<data.length; ++i){
+				var d = data[i];
+				t_list.innerHTML += "<li onclick=\"appendTo('group_column','"+d.notation+"')\">"+d.name+'('+d.notation+')</li>';
+			}
+		}
+	});
+}
+
+function loadDrugs(){
+	if (!$('#config_drugs_show')[0].checked){
+		$.post('p_drugs.php?type=getDrugs', '', function(meta){
+			var result = jQuery.parseJSON(meta);
+			var column = $('#group_column')[0].value;
+			if (result.status == 1){
+				var t_list = $('#t_list')[0];
+				t_list.innerHTML = '';
+				
+				var data = result.data;
+				for (var i=0; i<data.length; ++i){
+					var d = data[i];
+					var value = d[column];
+					var label = (!d[column] || column=='name') ? '' : '('+d[column]+')';
+					t_list.innerHTML += "<li onclick=\"appendTo('group_condition','"+value+"')\">"+d.name+' <x class="mark">'+label+'</x></li>';
+				}
+			}
+		});
+	}else{
+		var column = $('#group_column')[0].value;
+		$.post('p_drugs.php?type=getDrugProperties', 'column='+column, function(meta){
+			var result = jQuery.parseJSON(meta);
+			if (result.status == 1){
+				var t_list = $('#t_list')[0];
+				t_list.innerHTML = '';
+				var data = result.data;
+				for (var i=0; i<data.length; ++i){
+					var d = data[i];
+					t_list.innerHTML += '<li>'+d+'</li>';
+				}
+			}
+		});
+	}
+}
