@@ -323,6 +323,7 @@
 			
 			$meta['insert']['num'] = $inserts;
 			if ($inserts > 0){
+				echo $insert;
 				$insert = substr($insert, 0, -1); //去掉最后的“,”
 				$meta['insert']['status'] = $DB->query($insert) ? 1 : 0;
 			}else{
@@ -331,6 +332,7 @@
 			
 			$meta['update']['num'] = $updates;
 			if ($updates > 0){
+				echo $update;
 				$_update = explode(';', $update); //要分条执行
 				$t = true;
 				foreach ($_update as $u){

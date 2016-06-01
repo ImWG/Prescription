@@ -81,6 +81,21 @@ function loadDrugGroups(){
 		}
 	});
 }
+function loadDrugsForEquals(){
+	$.post('p_drugs.php?type=getDrugs', '', function(meta){
+		var result = jQuery.parseJSON(meta);
+		if (result.status == 1){
+			var t_list = $('#t_list')[0];
+			t_list.innerHTML = '';
+			
+			var data = result.data;
+			for (var i=0; i<data.length; ++i){
+				var d = data[i];
+				t_list.innerHTML += "<li onclick=\"appendTo('group_condition','"+d.id+"')\">"+d.name+'('+d.id+')</li>';
+			}
+		}
+	});
+}
 
 function loadDrugs(){
 	if (!$('#config_drugs_show')[0].checked){
@@ -115,4 +130,31 @@ function loadDrugs(){
 			}
 		});
 	}
+}
+
+function loadDrugsForEqualsByIds(id){
+	var tag = $('#'+id)[0];
+	var content = tag.value.split(/\s+/);
+	
+	var str = '';
+	for(var i=0; i<content.length; ++i){
+		str += 'ids[]='+content[i]+'&';
+	}
+	
+	$.post('p_drugs.php?type=getDrugsByIds', str, function(meta){
+		var result = jQuery.parseJSON(meta);
+		var column = $('#group_column')[0].value;
+		if (result.status == 1){
+			var t_list = $('#t_list')[0];
+			t_list.innerHTML = '';
+			
+			var data = result.data;
+			for (var i=0; i<data.length; ++i){
+				var d = data[i];
+				var value = d[column];
+				var label = (!d[column] || column=='name') ? '' : '('+d[column]+')';
+				t_list.innerHTML += "<li>"+d.name+'('+d.id+')</li>';
+			}
+		}
+	});
 }

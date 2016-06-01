@@ -25,5 +25,8 @@
 		static public function arrayIconvGBK2UTF8($arg){
 			return self::arrayIconv('gbk', 'utf-8', $arg);
 		}
+		static public function arrayIconvUTF82GBK($arg){
+			return self::arrayIconv('utf-8', 'gbk', $arg);
+		}
 	}
 ?>

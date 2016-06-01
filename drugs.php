@@ -39,7 +39,7 @@
 					}
 				?>
 				</div>
-				<input type='button' value='添加固定标签' onclick='location.href="drugs.php?type=create0"' />
+				<input type='button' disabled value='添加固定标签' onclick='location.href="drugs.php?type=create0"' />
 				<input type='button' value='添加动态标签' onclick='location.href="drugs.php?type=create1"' />
 				<input type='button' value='添加超级标签' onclick='location.href="drugs.php?type=create2"' />
 				

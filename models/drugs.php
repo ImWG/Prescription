@@ -54,6 +54,30 @@
 		}
 		
 		/**
+		 * 根据名称获取某个药品
+		 * $simple-如果为真则只获取id和name
+		 * $name-药品名称
+		 */
+		static function getListByName($name, $simple){
+			
+			global $DB;
+			
+			return self::_getList(" where `name` = '$name'", $simple);
+		}
+		
+		/**
+		 * 根据编号获取某个药品
+		 * $simple-如果为真则只获取id和name
+		 * $name-药品名称
+		 */
+		static function getListById($id, $simple){
+			
+			global $DB;
+			
+			return self::_getList(" where `id` = '$id'", $simple);
+		}
+		
+		/**
 		 * 获取药品某个属性的所有值
 		 * $column-字段名
 		 */
@@ -287,6 +311,20 @@
 				
 				return self::_getList($postfix, $simple);
 			}
+		}
+		
+		
+		/**
+		 * 通过编号群获取药品列表
+		 * $notation-标签代号；$simple-如果为真则只获取id和name；$invert-是否反选
+		 */
+		static function getListByIds($ids, $simple){
+			
+			global $DB;
+					
+			$postfix = 'where `id`="'.implode('" or `id`="', $ids).'"';
+					
+			return self::_getList($postfix, $simple);
 		}
 		
 		

@@ -122,7 +122,7 @@
 			}
 			
 			$itemIds = array();
-			foreach($data as $presc){
+			foreach($data as $PID => $presc){
 				if ($presc['data'] == null){
 					continue; //没有数据的不显示
 				}
@@ -130,14 +130,16 @@
 				echo '<div class="panel panel-default">';
 				
 				//显示处方总体信息
-				echo '<div class="col-sm-12 panel-heading">';
+				echo "<div class='col-sm-12 panel-heading' id='=$PID'>";
 				foreach(Database::$COLUMNS_PRESCS as $KEY => $NAME){
-					echo '<span class="col-sm-'.Database::$COLUMNS_STRIDE['P'][$KEY].'">'.$NAME.':'.$presc[$KEY].'</span>';
+					//echo '<span class="col-sm-'.Database::$COLUMNS_STRIDE['P'][$KEY].'" id="='.$PID.'_'.$KEY.'" value="'.$presc[$KEY].'">'.$NAME.':'.$presc[$KEY].'</span>';
+					echo "<span class='col-sm-".Database::$COLUMNS_STRIDE['P'][$KEY]."' id='{$KEY}' value='{$presc[$KEY]}'>{$NAME}:{$presc[$KEY]}</span>";
 				}
 				echo '</div>';
-				echo '<div class="panel-body">';
+				echo "<div class='panel-body'>";
 				echo '<ul class="list-group">';
 				
+				$names = array();
 				foreach($presc['data'] as $item){
 					$id = $item['ItemId'];
 					$itemIds[] = $id;
@@ -145,10 +147,12 @@
 					echo '<li class="list-group-item col-sm-12">';
 					
 					//显示处方表头和信息
+					echo "<span id='=$id'>";
 					foreach(Database::$COLUMNS_ITEMS_NOX as $KEY => $NAME){
-							echo "<span class='col-sm-".Database::$COLUMNS_STRIDE['I'][$KEY]."'><label>{$NAME}：</label>{$item[$KEY]}</span>";
+						echo "<span class='col-sm-".Database::$COLUMNS_STRIDE['I'][$KEY]."' id='$KEY' value='{$item[$KEY]}'><label>{$NAME}：</label>{$item[$KEY]}</span>";
 					}
-					
+					echo '</span>';
+					$names[] = $item['Name'];
 					
 					//显示评价表头
 					/*if ($task != 0){
@@ -162,17 +166,17 @@
 						foreach($columnEvals as $KEY => $NAME){
 							$value = $item[$KEY];
 							if ($KEY == 'EOther'){
-								echo "<label class='col-sm-1 text-right'>$NAME</label><textarea class='col-sm-10' name='$id.$KEY'>$value</textarea></td>";
+								echo "<label class='col-sm-1 text-right'>$NAME</label><textarea class='col-sm-9' name='$id.$KEY' id='$id.$KEY'>$value</textarea><input type='button' class='col-sm-1' value='自动评价' onclick='autoCheck(\"$PID\", \"$id\");'/></td>";
 							}elseif ($KEY == 'Checked'){
 								if ($mode == 1)
 									$checked = $value==2 ? 'checked' : '';
 								else
 									$checked = $value==1 ? 'checked' : '';
 									
-								echo "<span class='col-sm-1 text-right'><input class='form-control' type='checkbox' name='$id.$KEY' $checked value=1 /></span>";
+								echo "<span class='col-sm-1 text-right'><input class='form-control' type='checkbox' name='$id.$KEY' id='$id.$KEY' $checked value=1 /></span>";
 							}else{
 								$checked = $value[0]=='.' ? 'checked' : '';
-								echo "<span class='col-sm-2 text-right'><label>$NAME</label><input type='checkbox' name='$id~$KEY' $checked/></span><textarea class='col-sm-10' name='$id.$KEY'>".substr($value,1).'</textarea>';
+								echo "<span class='col-sm-2 text-right'><label>$NAME</label><input type='checkbox' name='$id~$KEY' id='$id~$KEY' $checked /></span><textarea class='col-sm-10' name='$id.$KEY' id='$id.$KEY'>".substr($value,1).'</textarea>';
 							}
 						}
 					}
@@ -183,6 +187,8 @@
 				echo '</ul>';
 				echo '</div>';
 				echo '</div>';
+				
+				echo "<x id='{$PID}.names' value='Names[]=".implode('&Names[]=', $names)."' />";
 				
 			}
 					
@@ -200,4 +206,5 @@
 	</body>
 	<script src="http://apps.bdimg.com/libs/jquery/2.0.0/jquery.min.js"></script>
 	<script src="http://apps.bdimg.com/libs/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+	<script src="./js/list.js"></script>
 </html>

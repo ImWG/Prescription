@@ -50,6 +50,9 @@
 	}else if ($_GET['type'] == 'getDrugs'){
 		$meta['status'] = 1;
 		$meta['data'] = Util::arrayIconvGBK2UTF8(Drugs::getList(false));
+	}else if ($_GET['type'] == 'getDrugsByIds'){
+		$meta['status'] = 1;
+		$meta['data'] = Util::arrayIconvGBK2UTF8(Drugs::getListByIds($_POST['ids'], true));
 	}else if ($_GET['type'] == 'getDrugProperties'){
 		$meta['status'] = 1;
 		$meta['data'] = Util::arrayIconvGBK2UTF8(Drugs::getListProperties($_POST['column']));
