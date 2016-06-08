@@ -44,7 +44,8 @@ function submitDrugGroup1(){
 	var formDrugs = document.getElementById('form_drugs');
 	formDrugs.innerHTML = '';
 	
-	formDrugs.innerHTML += '<input type="hidden" name="column" value="'+document.getElementById('group_column').value+'" />';
+	if (document.getElementById('group_column'))
+		formDrugs.innerHTML += '<input type="hidden" name="column" value="'+document.getElementById('group_column').value+'" />';
 	var conditions = (document.getElementById('group_condition').value).split(' ');
 	for (var i=0; i<conditions.length; ++i){
 		formDrugs.innerHTML += '<input type="hidden" name="conditions[]" value="'+conditions[i]+'" />';

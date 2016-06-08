@@ -122,10 +122,14 @@
 			$data = '';
 			if ($type == self::TYPE_FIXED ){ //是直接指定id的类型
 				$ids = $params['data']['ids'];
-				if (isset($ids)){
+				//注：以前ID纯正整数数字
+				/*if (isset($ids)){
 					foreach($ids as $tid){
 						$data .= pack('N', $tid);
 					}
+				}*/
+				if (isset($ids)){
+					$data .= implode("\0", $ids);
 				}
 			} else if ($type == self::TYPE_DYNAMIC){ //是查询的类型
 				$column = $params['data']['column'];
@@ -138,7 +142,7 @@
 			} else if ($type == self::TYPE_SUPER){ //是包含其他标签的类型
 				$ids = $params['data']['ids'];
 				if (isset($ids)){
-					$data .= implode(' ', $ids);
+					$data .= implode("\0", $ids);
 				}
 			}
 			//echo $data;
@@ -219,7 +223,7 @@
 				$superGroup = self::getGroup($notation);
 				if ($superGroup['type'] != self::TYPE_SUPER)
 					return array();
-				$notations = explode(' ', $superGroup['data']);
+				$notations = explode("\0", $superGroup['data']);
 				
 				if (count($notations) > 0){
 					$query0 = $DB->query("select * from `drug_groups` where ".($invert ? 'NOT' : '')."(`notation`='".implode("' OR `notation`='", $notations)."') and type <> ".self::TYPE_SUPER.";");
@@ -272,7 +276,16 @@
 			}else{	
 				$postfix;
 				if ($group['type'] == self::TYPE_FIXED){
-					$n = strlen($group['data']) / 4;
+					$datas = explode("\0", $group['data']);
+					$conditions = array();
+					foreach ($datas as $data){
+						if ($invert)
+							$conditions[] = "`id` <> '$data'";
+						else
+							$conditions[] = "`id` = '$data'";
+					}
+					//注：以前ID纯正整数数字
+					/*$n = strlen($group['data']) / 4;
 					$conditions = array();
 					for ($i=0; $i<$n; ++$i){
 						$segment = substr($group['data'], $i*4, 4);
@@ -281,7 +294,7 @@
 							$conditions[] = " `id` <> '{$id[1]}' ";
 						else
 							$conditions[] = " `id` = '{$id[1]}' ";
-					}
+					}*/
 				} else if ($group['type'] == self::TYPE_DYNAMIC){
 					$datas = explode("\0", $group['data']);
 					$column = $datas[0];

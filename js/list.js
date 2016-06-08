@@ -83,5 +83,16 @@ function autoCheck(pid, did){
 				
 			}
 		}
+		
+		if (result.EMethod){
+			if (result.EDosage == 0){
+				_(did+'~EDosage').checked = false;
+				_(did+'.EDosage').value += '【该药品的给药方式不正确，应为其中之一：'+result['EMethod:'].join('、')+'】';
+			}else if(result.EDosage == 1){
+				//_(did+'~EDosage').checked = true;
+				_(did+'.EDosage').value += '【该药品的给药方式正确】';
+				
+			}
+		}
 	});
 }

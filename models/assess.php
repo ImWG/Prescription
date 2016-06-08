@@ -87,9 +87,12 @@
 			preg_match_all('/^(?:(\d+)(?:年|岁)){0,1}(?:(\d+)(?:月|个月)){0,1}(?:(\d+)(?:日|天)){0,1}$/', $PatientAge, $matches);
 			$ageYear = intval($matches[1][0]) + intval($matches[2][0]) / 12 + intval($matches[3][0]) / 365;
 			$ageDay = intval($matches[1][0]) * 365 + intval($matches[2][0]) * 30 + intval($matches[3][0]);
+			//年龄到体重的换算
+			$mass = $age * 10;
 			
 			
-			$values = array('a'=>$ageYear, 'a..'=>$ageDay, '_diagnosis'=>$Diagnosis);
+			$values = array('a'=>$ageYear, 'a..'=>$ageDay, '_diagnosis'=>$Diagnosis,
+				'm'=>$mass);
 
 			
 			//剂量
@@ -130,6 +133,26 @@
 				$range[0], $range[1]);
 					
 					
+			//方式
+			$range = self::dosageCheck($values, $Drugs[0]['id'].'m');
+			$method = self::methodConvert($data['Method']);
+			
+			$method = 1<<$method[0];
+			$range = $range[0];
+			
+			if (($range & $method) == 0){
+				$assessment['EMethod'] = 0;
+				$assessment['EMethod:'] = array();
+				for ($i=0; $i<8; ++$i){
+					if (((1<<$i) & $range) != 0)
+						$assessment['EMethod:'][] = self::methodConvertInv($i);
+				}
+			}else{
+				$assessment['EMethod'] = 1;
+			}
+			
+			
+			
 						
 			return $assessment;
 		}
@@ -253,6 +276,100 @@
 			$figure = $map[$method];
 			
 			return array($figure);
+		}
+		
+		static private function methodConvertInv($figure){
+			$map = array(
+				0 => 'po',	1 => 'ig',	2 => 'inhal',
+				3 => 'ip',	4 => 'im',	5 => 'ih',
+				6 => 'iv',	7 => 'ivgtt'
+			);
+			$method = $map[$figure];
+			
+			return $method;
+		}
+		
+		
+		
+		public static function getDosage($notation){
+			global $DB;
+			global $dosageEquals;
+			
+			$p = $dosageEquals->getGroup($notation);
+			$unit = $p['type'];
+			$t = Util::arrayIconvUTF82GBK(json_decode($p['data'], true));
+			
+			if ($t != null){
+			
+				$line = array(
+					'id' => $p['id'],
+					'type' => $p['type'],
+					'notation' => $p['notation'],
+					'name' => $p['name'],
+					'memo' => $p['memo']
+					);
+				
+				$data = array();
+				
+				if (isset($t['fixed'])){
+					$data['fixed'] = $t['fixed']['@'];
+				}else{
+					if (isset($t['x'])){
+						$xs = array();
+						foreach($t['x'] as $_x){
+							if (isset($_x['@']))
+								$_x = $_x['@'];
+								
+							$xs[] = $_x;
+						}
+						$data['x'] = $xs;
+					}
+				
+					$levels = array();
+					if (isset($t['level']))
+						foreach($t['level'] as $_level){
+							$level = array();
+							
+							$inLevel = true;
+							$level = $_level['@'];
+							
+							$level['x'] = array();
+							foreach($_level['x'] as $_x){
+								if (isset($_x['@']))
+									$_x = $_x['@'];
+								
+								$level['x'][] = $_x;
+							}
+							$levels[] = $level;
+						}
+					$data['level'] = $levels;
+				}
+				if (isset($t['factor'])){
+					$data['factor'] = array();
+					foreach ($t['factor'] as $_factor){
+						if (isset($_factor['@']))
+							$_factor = $_factor['@'];
+							
+						$data['factor'][] = $_factor;
+					}
+				}
+				
+				$line['data'] = $data;
+			}
+			
+			return $line;
+		}
+		
+		public static function getAllDosages(){
+			global $DB;
+			global $dosageEquals;
+			
+			$groups = $dosageEquals->getGroups();
+			$dosages = array();
+			foreach($groups as $group){
+				$dosages[] = self::getDosage($group['notation']);
+			}
+			return $dosages;
 		}
 	}
 ?>
